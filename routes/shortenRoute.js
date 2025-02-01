@@ -1,9 +1,17 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
+
 const router = express.Router();
 const { nanoid } = require("nanoid");
 
 const url = require("../models/url");
 
+//limiter to limit repeted request to generate short url
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 2, // limit each IP to 2 requests per minute
+  message: "Too many requests, please try again later.",
+});
 //----------------------------------------------class----------------------------------------------
 class ShortenController {
   //function to create short url and store it in database
@@ -68,7 +76,11 @@ const shortenController = new ShortenController();
 //----------------------------------------------routes----------------------------------------------
 
 //post request to create short url and store it in database
-router.post("/", shortenController.createShortUrl.bind(shortenController));
+router.post(
+  "/",
+  limiter,
+  shortenController.createShortUrl.bind(shortenController)
+);
 
 //get request to redirect short url to long url
 router.get(
