@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const uuid = require("uuid");
 const { nanoid } = require("nanoid");
 
 const url = require("../models/url");
@@ -17,32 +16,39 @@ class ShortenController {
     }
 
     let customAlias;
-    //generate short url
-    const shortUrl = `https://${uuid.v4()}`;
     //generating customAlias if not present in body
     if (!body.customAlias) {
       customAlias = nanoid(8);
     } else {
+      const existingAlias = await url.findOne({ alias: body.customAlias });
+      if (existingAlias) {
+        return res.status(400).json({ error: "Alias already taken" });
+      }
       customAlias = body.customAlias;
     }
 
     if (!body.topic) {
       await url.create({
-        shortUrl: shortUrl,
+        shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
       });
     } else {
       await url.create({
-        shortUrl: shortUrl,
+        shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
         topic: body.topic,
       });
     }
 
-    return res.json({ shortUrl: shortUrl, createdAt: Date.now() });
+    return res.json({
+      shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
+      createdAt: Date.now(),
+    });
   }
+
+  async redirectShortUrl() {}
 }
 
 //created class instance
@@ -50,5 +56,7 @@ const shortenController = new ShortenController();
 
 //----------------------------------------------routes----------------------------------------------
 router.post("/", shortenController.createShortUrl.bind(shortenController));
+
+router.get("/", shortenController.redirectShortUrl.bind(shortenController));
 
 module.exports = router;
