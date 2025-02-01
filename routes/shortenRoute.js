@@ -20,7 +20,9 @@ class ShortenController {
     if (!body.customAlias) {
       customAlias = nanoid(8);
     } else {
-      const existingAlias = await url.findOne({ alias: body.customAlias });
+      const existingAlias = await url.findOne({
+        customAlias: body.customAlias,
+      });
       if (existingAlias) {
         return res.status(400).json({ error: "Alias already taken" });
       }
@@ -48,15 +50,30 @@ class ShortenController {
     });
   }
 
-  async redirectShortUrl() {}
+  //function to redirect short url to long url
+  async redirectShortUrl(req, res) {
+    const urlData = await url.findOne({ customAlias: req.params.alias });
+
+    if (!urlData) {
+      return res.status(404).json({ error: "Short URL not found" });
+    }
+
+    res.redirect(urlData.longUrl);
+  }
 }
 
 //created class instance
 const shortenController = new ShortenController();
 
 //----------------------------------------------routes----------------------------------------------
+
+//post request to create short url and store it in database
 router.post("/", shortenController.createShortUrl.bind(shortenController));
 
-router.get("/", shortenController.redirectShortUrl.bind(shortenController));
+//get request to redirect short url to long url
+router.get(
+  "/:alias",
+  shortenController.redirectShortUrl.bind(shortenController)
+);
 
 module.exports = router;
