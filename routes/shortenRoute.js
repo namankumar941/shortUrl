@@ -51,14 +51,14 @@ class ShortenController {
 
     if (!body.topic) {
       await url.create({
-        // userId: req.user.userId,
+        userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
       });
     } else {
       await url.create({
-        // userId: req.user.userId,
+        userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
