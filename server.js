@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 
 const shortenRoute = require("./routes/shortenRoute");
+const analyticsRoute = require("./routes/analyticsRoute");
 
 const session = require("express-session");
 
@@ -34,6 +35,7 @@ app.use("/auth", auth.setupRoutes());
 
 // Set up routes
 app.use("/api/shorten", shortenRoute);
+app.use("/api/analytics", analyticsRoute);
 
 mongoose
   .connect("mongodb://127.0.0.1:27017/shortUrl")
