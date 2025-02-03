@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const urlSchema = new mongoose.Schema(
   {
+    userId: { type: String },
     shortUrl: { type: String },
     longUrl: { type: String },
     customAlias: {

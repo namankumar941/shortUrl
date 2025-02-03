@@ -1,6 +1,8 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 
+const userAgentParser = require("user-agent");
+
 const router = express.Router();
 const { nanoid } = require("nanoid");
 
@@ -17,7 +19,6 @@ class ShortenController {
   //function to create short url and store it in database
   async createShortUrl(req, res) {
     const body = req.body;
-
     //if body is empty or long url is not present then return error
     if (!body || !body.longUrl) {
       return res.status(400).json({ error: "long URL is required" });
@@ -39,18 +40,22 @@ class ShortenController {
 
     if (!body.topic) {
       await url.create({
+        userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
       });
     } else {
       await url.create({
+        userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
         topic: body.topic,
       });
     }
+
+    await Analytics.create({ customAlias: customAlias });
 
     return res.json({
       shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
@@ -66,6 +71,7 @@ class ShortenController {
       return res.status(404).json({ error: "Short URL not found" });
     }
 
+    // redirect to original URL
     res.redirect(urlData.longUrl);
   }
 }
