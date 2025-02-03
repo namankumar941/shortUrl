@@ -1,6 +1,8 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 
+const UAParser = require("ua-parser-js");
+
 const { createClient } = require("redis");
 const client = createClient();
 
@@ -78,6 +80,76 @@ class ShortenController {
 
   //function to redirect short url to long url
   async redirectShortUrl(req, res) {
+    let analytics = await Analytics.findOne({ customAlias: req.params.alias });
+
+    if (analytics) {
+      //increment total clicks
+      analytics.totalClicks++;
+
+      // Increment clicks for today
+      const today = new Date().toISOString().split("T")[0];
+      const todayClick = analytics.clicksByDate.find(
+        (click) => click.date === today
+      );
+      if (todayClick) {
+        todayClick.clickCount++;
+      } else {
+        analytics.clicksByDate.push({ date: today, clickCount: 1 });
+      }
+
+      //increment uniqueUsers clicks
+      const clientIp = req.connection.remoteAddress;
+      const currentIp = await client.sIsMember("ips", clientIp);
+      if (!currentIp) {
+        analytics.uniqueUsers++;
+        await client.sAdd(`ips`, clientIp);
+      }
+
+      // retrieve the OS (Operating System) and device type from the request object
+      const userAgent = req.headers["user-agent"];
+      const parser = new UAParser();
+      parser.setUA(userAgent);
+      const result = parser.getResult();
+
+      // modify os type
+      const osType = analytics.osType.find(
+        (os) => os.osName === result.os.name
+      );
+      if (osType) {
+        osType.uniqueClicks++;
+        if (!currentIp) {
+          osType.uniqueUsers++;
+        }
+      } else {
+        analytics.osType.push({
+          osName: result.os.name,
+          uniqueClicks: 1,
+          uniqueUsers: 1,
+        });
+      }
+
+      // modify os type
+      const deviceName = result.device.type || "desktop"
+      const deviceType = analytics.deviceType.find(
+        (device) => device.deviceName === deviceName
+      );
+      if (deviceType) {
+        deviceType.uniqueClicks++;
+        if (!currentIp) {
+          deviceType.uniqueUsers++;
+        }
+      } else {
+        analytics.deviceType.push({
+          deviceName: deviceName,
+          uniqueClicks: 1,
+          uniqueUsers: 1,
+        });
+      }
+
+      //save all changes to database
+      await analytics.save();
+    }
+
     //check if redirecting url is present in redis or not
     const currentURL = await client.sMembers(req.params.alias);
     if (currentURL[0]) {
