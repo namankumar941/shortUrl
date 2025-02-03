@@ -1,12 +1,14 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 
-const userAgentParser = require("user-agent");
+const { createClient } = require("redis");
+const client = createClient();
 
 const router = express.Router();
 const { nanoid } = require("nanoid");
 
 const url = require("../models/url");
+const Analytics = require("../models/analytics");
 
 //limiter to limit repeted request to generate short url
 const limiter = rateLimit({
@@ -16,6 +18,15 @@ const limiter = rateLimit({
 });
 //----------------------------------------------class----------------------------------------------
 class ShortenController {
+  constructor() {
+    this.connectClient();
+  }
+
+  //connect to redis client
+  async connectClient() {
+    await client.connect();
+  }
+
   //function to create short url and store it in database
   async createShortUrl(req, res) {
     const body = req.body;
@@ -40,14 +51,14 @@ class ShortenController {
 
     if (!body.topic) {
       await url.create({
-        userId: req.user.userId,
+        // userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
       });
     } else {
       await url.create({
-        userId: req.user.userId,
+        // userId: req.user.userId,
         shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
         longUrl: body.longUrl,
         customAlias: customAlias,
@@ -57,6 +68,8 @@ class ShortenController {
 
     await Analytics.create({ customAlias: customAlias });
 
+    await client.sAdd(customAlias, body.longUrl);
+
     return res.json({
       shortUrl: `http://localhost:8000/api/shorten/${customAlias}`,
       createdAt: Date.now(),
@@ -65,6 +78,13 @@ class ShortenController {
 
   //function to redirect short url to long url
   async redirectShortUrl(req, res) {
+    //check if redirecting url is present in redis or not
+    const currentURL = await client.sMembers(req.params.alias);
+    if (currentURL[0]) {
+      // redirect to original URL
+      return res.redirect(currentURL[0]);
+    }
+
     const urlData = await url.findOne({ customAlias: req.params.alias });
 
     if (!urlData) {
