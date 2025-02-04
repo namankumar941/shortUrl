@@ -6,10 +6,16 @@ const axios = require("axios");
 const UAParser = require("ua-parser-js");
 
 const { createClient } = require("redis");
-const client = createClient();
+const client = createClient({
+  url: 'redis://redis:6379', // Use the service name "redis" defined in docker-compose.yml
+});
 
 const router = express.Router();
-const { nanoid } = require("nanoid");
+// const { nanoid } = require("nanoid");
+let nanoid;
+import("nanoid").then((module) => {
+  nanoid = module.nanoid;
+});
 
 const url = require("../models/url");
 const Analytics = require("../models/analytics");

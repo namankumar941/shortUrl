@@ -37,10 +37,16 @@ app.use("/auth", auth.setupRoutes());
 app.use("/api/shorten", shortenRoute);
 app.use("/api/analytics", analyticsRoute);
 
+// mongoose
+//   .connect("mongodb://127.0.0.1:27017/shortUrl")
+//   .then(() => console.log("mongo db connected"))
+//   .catch((err) => console.log("mongo connection error", err));
+
 mongoose
-  .connect("mongodb://127.0.0.1:27017/shortUrl")
-  .then(() => console.log("mongo db connected"))
-  .catch((err) => console.log("mongo connection error", err));
+  .connect('mongodb://mongo:27017/shortUrl',{ useNewUrlParser: true, useUnifiedTopology: true })  // Use the service name "mongo" from docker-compose.yml
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log("MongoDB connection error", err));
+
 
 // starting server
 app.listen(port, () => console.log("server started"));
