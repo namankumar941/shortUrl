@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 
 const url = require("../models/url");
 const Analytics = require("../models/analytics");
@@ -84,9 +85,25 @@ class AnalyticsController {
 
   //function to Get Overall Analytics
   async overallAnalytics(req, res) {
+    //get userid from accesstoken when called through postman
+    if (!req.user) {
+      const token = req.headers["authorization"];
+      if (!token) {
+        return res.status(404).json({ error: "User not authenticated" });
+      }
+      const response = await axios.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        {
+          headers: {
+            Authorization: token, // Pass the access token in the Authorization header
+          },
+        }
+      );
+      req.user = { userId: response.data.sub };
+    }
+
     //get all urls by the authenticated user
     const allUrls = await url.find({ userId: req.user.userId });
-
     const totalUrls = allUrls.length;
     let totalClicks = 0;
     let uniqueUsers = 0;

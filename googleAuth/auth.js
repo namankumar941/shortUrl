@@ -5,7 +5,6 @@ const express = require("express");
 const uuid = require("uuid");
 require("dotenv").config();
 //----------------------------------------------class----------------------------------------------
-
 class Authentication {
   constructor() {
     this.initPassport();
@@ -27,8 +26,8 @@ class Authentication {
     passport.use(
       new googleStrategy(
         {
-          clientID:  process.env.clientId,
-          clientSecret:  process.env.clientSecret,
+          clientID: process.env.clientId,
+          clientSecret: process.env.clientSecret,
           callbackURL: "/auth/google/redirect",
         },
         async (accessToken, refreshToken, profile, done) => {
@@ -68,8 +67,9 @@ class Authentication {
     // Route to handle Google OAuth callback
     router.get(
       "/google/redirect",
-      passport.authenticate("google", { failureRedirect: "/" }),
+      passport.authenticate("google", { failureRedirect: "/auth/google" }),
       (req, res) => {
+        console.log("1");
         res.send("Login successful");
       }
     );

@@ -1,6 +1,8 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 
+const axios = require("axios");
+
 const UAParser = require("ua-parser-js");
 
 const { createClient } = require("redis");
@@ -31,6 +33,23 @@ class ShortenController {
 
   //function to create short url and store it in database
   async createShortUrl(req, res) {
+    //get userid from accesstoken when called through postman
+    if (!req.user) {
+      const token = req.headers["authorization"];
+      if (!token) {
+        return res.status(404).json({ error: "User not authenticated" });
+      }
+      const response = await axios.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        {
+          headers: {
+            Authorization: token, // Pass the access token in the Authorization header
+          },
+        }
+      );
+      req.user = { userId: response.data.sub };
+    }
+
     const body = req.body;
     //if body is empty or long url is not present then return error
     if (!body || !body.longUrl) {
@@ -129,7 +148,7 @@ class ShortenController {
       }
 
       // modify os type
-      const deviceName = result.device.type || "desktop"
+      const deviceName = result.device.type || "desktop";
       const deviceType = analytics.deviceType.find(
         (device) => device.deviceName === deviceName
       );
