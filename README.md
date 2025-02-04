@@ -2,18 +2,32 @@
 
 # Setup Instructions
 
-## 1. Install Dependencies
-Run `npm install` in the projecy directory
+## 1. Prerequisites
+- Docker installed on your machine.
+- Docker Compose installed on your machine.
 
-## 2. create .env file with variable
-- `clientId = " "` :- for google oauth 2.0
-- `clientSecret = " "` :- for google oauth 2.0
+## 2. Setup
 
-## 3. Start Server
+- Clone the repository:
 
-run in terminal :
+    - In terminal run command :- 
 
-- `npm start`
+        - git clone https://github.com/namankumar941/shortUrl
+
+        - cd shortUrl
+
+- Create .env file with variable
+
+    - `clientId = " "` :- for google oauth 2.0
+
+    - `clientSecret = " "` :- for google oauth 2.0
+
+- Start Server
+
+    - In terminal run command :-
+    
+        - docker-compose up --build
+
 
 # Test API through postman
 
